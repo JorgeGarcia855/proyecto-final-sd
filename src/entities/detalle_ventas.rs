@@ -16,8 +16,6 @@ struct DetalleVentas {
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct UpdateDetalleVenta {
-    codigo_producto: i64,
-    codigo_venta: i64,
     cantidad_producto: i32,
     valor_total: f64,
     valor_venta: f64,
@@ -41,7 +39,7 @@ struct UpdateDetalleVenta {
 // }
 
 // #[patch("/{id}")]
-// pub async fn update(state: Data<AppState>,  path: Path<i64>) -> impl Responder {
+// pub async fn update(state: Data<AppState>,  path: Path<i64>, venta: Json<UpdateDetalleVenta>) -> impl Responder {
     // let id = path.into_inner();
 //     todo!()
 // }

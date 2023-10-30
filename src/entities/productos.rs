@@ -15,7 +15,6 @@ struct Productos {
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct UpdateProducto {
-    nit_proveedor: i64,
     iva_compra: f64,
     nombre_producto: String,
     precio_compra: f64,
@@ -66,8 +65,7 @@ pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Respond
 #[patch("/{id}")]
 pub async fn update(state: Data<AppState>,  path: Path<i64>, producto: Json<UpdateProducto>) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Productos>("update productos set nit_proveedor = $1, iva_compra = $2, nombre_producto = $3, precio_compra = $4, precio venta = $5 where codigo = $6;")
-        .bind(producto.nit_proveedor)
+    match sqlx::query_as::<_, Productos>("update productos set iva_compra = $1, nombre_producto = $2, precio_compra = $3, precio venta = $4 where codigo = $5;")
         .bind(producto.iva_compra)
         .bind(producto.nombre_producto.as_str())
         .bind(producto.precio_compra)
