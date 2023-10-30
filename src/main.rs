@@ -1,6 +1,8 @@
 mod entities;
 
+use actix_cors::Cors;
 use actix_web::{
+    http::header,
     web::{self, Data},
     App, HttpServer,
 };
@@ -23,6 +25,18 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(Data::new(AppState { db: pool.clone() }))
+            .wrap(
+                Cors::default()
+                    .allowed_origin("http://localhost:8081")
+                    .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE"])
+                    .allowed_headers(vec![
+                        header::AUTHORIZATION,
+                        header::ACCEPT,
+                        header::CONTENT_TYPE,
+                    ])
+                    .supports_credentials()
+                    .max_age(3600),
+            )
             .service(
                 web::scope("/api")
                     .service(
