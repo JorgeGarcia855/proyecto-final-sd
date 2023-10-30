@@ -1,7 +1,11 @@
-use sqlx::FromRow;
-use serde::{Serialize, Deserialize};
-use actix_web::{get, post, patch, delete, Responder, HttpResponse, web::{Data, Path, Json} };
 use crate::AppState;
+use actix_web::{
+    delete, get, patch, post,
+    web::{Data, Json, Path},
+    HttpResponse, Responder,
+};
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct Clientes {
@@ -9,7 +13,7 @@ struct Clientes {
     direccion: String,
     email: String,
     nombre: String,
-    telefono: String
+    telefono: String,
 }
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
@@ -17,7 +21,7 @@ struct UpdateCliente {
     direccion: String,
     email: String,
     nombre: String,
-    telefono: String
+    telefono: String,
 }
 
 #[post("/")]
@@ -32,7 +36,7 @@ pub async fn create(state: Data<AppState>, cliente: Json<Clientes>) -> impl Resp
         .await
     {
         Ok(_) => HttpResponse::Created().json("Cliente creado"),
-        Err(_) => HttpResponse::InternalServerError().json("could not create client")
+        Err(_) => HttpResponse::InternalServerError().json("could not create client"),
     }
 }
 
@@ -43,7 +47,7 @@ pub async fn read_all(state: Data<AppState>) -> impl Responder {
         .await
     {
         Ok(clientes) => HttpResponse::Ok().json(clientes),
-        Err(_) => HttpResponse::NotFound().json("not clientes found")
+        Err(_) => HttpResponse::NotFound().json("not clientes found"),
     }
 }
 
@@ -56,12 +60,16 @@ pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responde
         .await
     {
         Ok(cliente) => HttpResponse::Ok().json(cliente),
-        Err(_) => HttpResponse::NotFound().json("cliente not found")
-    } 
+        Err(_) => HttpResponse::NotFound().json("cliente not found"),
+    }
 }
 
 #[patch("/{id}")]
-pub async fn update(state: Data<AppState>, path: Path<i64>, cliente: Json<UpdateCliente>)  -> impl Responder {
+pub async fn update(
+    state: Data<AppState>,
+    path: Path<i64>,
+    cliente: Json<UpdateCliente>,
+) -> impl Responder {
     let id = path.into_inner();
     match sqlx::query_as::<_, Clientes>("update clientes set direccion = $1, email = $2, nombre = $3, telefono = $4 where cedula = $5;")
         .bind(cliente.direccion.as_str())
@@ -86,6 +94,6 @@ pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Client deleted"),
-        Err(_) => HttpResponse::InternalServerError().json("could not delete client")
+        Err(_) => HttpResponse::InternalServerError().json("could not delete client"),
     }
 }

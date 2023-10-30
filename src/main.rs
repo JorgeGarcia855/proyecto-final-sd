@@ -56,21 +56,23 @@ async fn main() -> std::io::Result<()> {
                             .service(productos::create)
                             .service(productos::delete)
                             .service(productos::update),
-                    ) 
-                    .service(web::scope("/ventas")
+                    )
+                    .service(
+                        web::scope("/ventas")
                             .service(ventas::read_all)
                             .service(ventas::read_by_id)
                             .service(ventas::create)
                             .service(ventas::delete)
-                            .service(ventas::update)
+                            .service(ventas::update),
                     )
-                    .service(web::scope("/detalle_ventas")
+                    .service(
+                        web::scope("/detalle_ventas")
                             .service(detalle_ventas::read_all)
                             .service(detalle_ventas::read_by_id)
                             .service(detalle_ventas::create)
                             .service(detalle_ventas::delete)
-                            .service(detalle_ventas::update)
-                    )
+                            .service(detalle_ventas::update),
+                    ),
             )
     })
     .bind(("127.0.0.1", 8080))?

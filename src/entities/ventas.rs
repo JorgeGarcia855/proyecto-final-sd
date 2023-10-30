@@ -1,7 +1,11 @@
-use sqlx::FromRow;
-use serde::{Serialize, Deserialize};
-use actix_web::{get, post, patch, delete, Responder, HttpResponse, web::{Data, Path, Json} };
 use crate::AppState;
+use actix_web::{
+    delete, get, patch, post,
+    web::{Data, Json, Path},
+    HttpResponse, Responder,
+};
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct Ventas {
@@ -33,7 +37,7 @@ pub async fn create(state: Data<AppState>, venta: Json<Ventas>) -> impl Responde
         .await
     {
         Ok(_) => HttpResponse::Created().json("venta creada"),
-        Err(_) => HttpResponse::InternalServerError().json("could not create venta")
+        Err(_) => HttpResponse::InternalServerError().json("could not create venta"),
     }
 }
 
@@ -44,12 +48,12 @@ pub async fn read_all(state: Data<AppState>) -> impl Responder {
         .await
     {
         Ok(ventas) => HttpResponse::Ok().json(ventas),
-        Err(_) => HttpResponse::NotFound().json("ventas not found")
+        Err(_) => HttpResponse::NotFound().json("ventas not found"),
     }
 }
 
 #[get("/{id}")]
-pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Responder {
+pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
     match sqlx::query_as::<_, Ventas>("select * from ventas where codigo = ?;")
         .bind(id)
@@ -57,23 +61,29 @@ pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Respond
         .await
     {
         Ok(venta) => HttpResponse::Ok().json(venta),
-        Err(_) => HttpResponse::NotFound().json("venta not found")
+        Err(_) => HttpResponse::NotFound().json("venta not found"),
     }
 }
 
 #[patch("/{id}")]
-pub async fn update(state: Data<AppState>,  path: Path<i64>, venta: Json<UpdateVenta>) -> impl Responder {
+pub async fn update(
+    state: Data<AppState>,
+    path: Path<i64>,
+    venta: Json<UpdateVenta>,
+) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Ventas>("update ventas set iva_venta = $1, total_venta = $2, valor_venta = $3 where codigo = $4;")
-        .bind(venta.iva_venta)
-        .bind(venta.total_venta)
-        .bind(venta.valor_venta)
-        .bind(id)
-        .fetch_optional(&state.db)
-        .await
+    match sqlx::query_as::<_, Ventas>(
+        "update ventas set iva_venta = $1, total_venta = $2, valor_venta = $3 where codigo = $4;",
+    )
+    .bind(venta.iva_venta)
+    .bind(venta.total_venta)
+    .bind(venta.valor_venta)
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await
     {
         Ok(_) => HttpResponse::Ok().json("venta updated"),
-        Err(_) => HttpResponse::InternalServerError().json("could not update venta")
+        Err(_) => HttpResponse::InternalServerError().json("could not update venta"),
     }
 }
 
@@ -86,6 +96,6 @@ pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Venta deleted"),
-        Err(_) => HttpResponse::InternalServerError().json("could not delete venta")
+        Err(_) => HttpResponse::InternalServerError().json("could not delete venta"),
     }
 }

@@ -1,7 +1,11 @@
-use sqlx::FromRow;
-use serde::{Serialize, Deserialize};
-use actix_web::{get, post, patch, delete, Responder, HttpResponse, web::{Data, Path, Json} };
 use crate::AppState;
+use actix_web::{
+    delete, get, patch, post,
+    web::{Data, Json, Path},
+    HttpResponse, Responder,
+};
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct Usuarios {
@@ -32,7 +36,7 @@ pub async fn create(state: Data<AppState>, usuario: Json<Usuarios>) -> impl Resp
         .await
     {
         Ok(_) => HttpResponse::Created().json("Usuario creado"),
-        Err(_) => HttpResponse::InternalServerError().json("could not create user")
+        Err(_) => HttpResponse::InternalServerError().json("could not create user"),
     }
 }
 
@@ -43,12 +47,12 @@ pub async fn read_all(state: Data<AppState>) -> impl Responder {
         .await
     {
         Ok(usuarios) => HttpResponse::Ok().json(usuarios),
-        Err(_) => HttpResponse::NotFound().json("users not found")
+        Err(_) => HttpResponse::NotFound().json("users not found"),
     }
 }
 
 #[get("/{id}")]
-pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Responder {
+pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
     match sqlx::query_as::<_, Usuarios>("select * from usuarios where cedula = ?;")
         .bind(id)
@@ -56,12 +60,16 @@ pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Respond
         .await
     {
         Ok(usuario) => HttpResponse::Ok().json(usuario),
-        Err(_) => HttpResponse::NotFound().json("user not found")
-    } 
+        Err(_) => HttpResponse::NotFound().json("user not found"),
+    }
 }
 
 #[patch("/{id}")]
-pub async fn update(state: Data<AppState>,  path: Path<i64>, usuario: Json<UpdateUsuario>) -> impl Responder {
+pub async fn update(
+    state: Data<AppState>,
+    path: Path<i64>,
+    usuario: Json<UpdateUsuario>,
+) -> impl Responder {
     let id = path.into_inner();
     match sqlx::query_as::<_, Usuarios>("update usuarios set email = $1, nombre = $2, password = $3, usuario = $4 where cedula = $5;")
         .bind(usuario.email.as_str())
@@ -86,6 +94,6 @@ pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Usuario deleted"),
-        Err(_) => HttpResponse::InternalServerError().json("could not delete user")
+        Err(_) => HttpResponse::InternalServerError().json("could not delete user"),
     }
 }

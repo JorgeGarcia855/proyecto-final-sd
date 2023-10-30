@@ -1,7 +1,11 @@
-use sqlx::FromRow;
-use serde::{Serialize, Deserialize};
-use actix_web::{get, post, patch, delete, Responder, HttpResponse, web::{Data, Path, Json} };
 use crate::AppState;
+use actix_web::{
+    delete, get, patch, post,
+    web::{Data, Json, Path},
+    HttpResponse, Responder,
+};
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct Productos {
@@ -34,7 +38,7 @@ pub async fn create(state: Data<AppState>, producto: Json<Productos>) -> impl Re
         .await
     {
         Ok(_) => HttpResponse::Created().json("Producto creado"),
-        Err(_) => HttpResponse::InternalServerError().json("could not create producto")
+        Err(_) => HttpResponse::InternalServerError().json("could not create producto"),
     }
 }
 
@@ -45,12 +49,12 @@ pub async fn read_all(state: Data<AppState>) -> impl Responder {
         .await
     {
         Ok(productos) => HttpResponse::Ok().json(productos),
-        Err(_) => HttpResponse::NotFound().json("productos not found")
+        Err(_) => HttpResponse::NotFound().json("productos not found"),
     }
 }
 
 #[get("/{id}")]
-pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Responder {
+pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
     match sqlx::query_as::<_, Productos>("select * from productos where codigo = ?;")
         .bind(id)
@@ -58,12 +62,16 @@ pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Respond
         .await
     {
         Ok(producto) => HttpResponse::Ok().json(producto),
-        Err(_) => HttpResponse::NotFound().json("producto not found")
+        Err(_) => HttpResponse::NotFound().json("producto not found"),
     }
 }
 
 #[patch("/{id}")]
-pub async fn update(state: Data<AppState>,  path: Path<i64>, producto: Json<UpdateProducto>) -> impl Responder {
+pub async fn update(
+    state: Data<AppState>,
+    path: Path<i64>,
+    producto: Json<UpdateProducto>,
+) -> impl Responder {
     let id = path.into_inner();
     match sqlx::query_as::<_, Productos>("update productos set iva_compra = $1, nombre_producto = $2, precio_compra = $3, precio_venta = $4 where codigo = $5;")
         .bind(producto.iva_compra)
@@ -88,6 +96,6 @@ pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Producto deleted"),
-        Err(_) => HttpResponse::InternalServerError().json("could not delete producto")
+        Err(_) => HttpResponse::InternalServerError().json("could not delete producto"),
     }
 }
