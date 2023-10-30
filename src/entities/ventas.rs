@@ -72,7 +72,7 @@ pub async fn update(state: Data<AppState>,  path: Path<i64>, venta: Json<UpdateV
         .fetch_optional(&state.db)
         .await
     {
-        Ok(_) => HttpResponse::Created().json("venta updated"),
+        Ok(_) => HttpResponse::Ok().json("venta updated"),
         Err(_) => HttpResponse::InternalServerError().json("could not update venta")
     }
 }

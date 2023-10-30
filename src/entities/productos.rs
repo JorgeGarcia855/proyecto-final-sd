@@ -65,7 +65,7 @@ pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Respond
 #[patch("/{id}")]
 pub async fn update(state: Data<AppState>,  path: Path<i64>, producto: Json<UpdateProducto>) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Productos>("update productos set iva_compra = $1, nombre_producto = $2, precio_compra = $3, precio venta = $4 where codigo = $5;")
+    match sqlx::query_as::<_, Productos>("update productos set iva_compra = $1, nombre_producto = $2, precio_compra = $3, precio_venta = $4 where codigo = $5;")
         .bind(producto.iva_compra)
         .bind(producto.nombre_producto.as_str())
         .bind(producto.precio_compra)
@@ -74,8 +74,8 @@ pub async fn update(state: Data<AppState>,  path: Path<i64>, producto: Json<Upda
         .fetch_optional(&state.db)
         .await
     {
-        Ok(_) => HttpResponse::Created().json("Producto creado"),
-        Err(_) => HttpResponse::InternalServerError().json("could not create producto")
+        Ok(_) => HttpResponse::Ok().json("Producto updated"),
+        Err(_) => HttpResponse::InternalServerError().json("could not update producto")
     }
 }
 

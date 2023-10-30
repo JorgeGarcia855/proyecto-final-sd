@@ -22,30 +22,74 @@ struct UpdateDetalleVenta {
     valor_iva: f64,
 }
 
-// #[post("/")]
-// pub async fn create(state: Data<AppState>, detalle_venta: Json<DetalleVentas>) -> impl Responder {
-//     todo!()
-// }
+#[post("/")]
+pub async fn create(state: Data<AppState>, detalle_venta: Json<DetalleVentas>) -> impl Responder {
+    match sqlx::query_as::<_, DetalleVentas>("insert into detalle_ventas values ($1,$2,$3,$4,$5,$6,$7);")
+        .bind(detalle_venta.codigo)
+        .bind(detalle_venta.codigo_producto)
+        .bind(detalle_venta.codigo_venta)
+        .bind(detalle_venta.cantidad_producto)
+        .bind(detalle_venta.valor_total)
+        .bind(detalle_venta.valor_venta)
+        .bind(detalle_venta.valor_iva)
+        .fetch_optional(&state.db)
+        .await
+    {
+        Ok(_) => HttpResponse::Created().json("detalle venta creada"),
+        Err(_) => HttpResponse::InternalServerError().json("could not create detalle venta")
+    }
+}
 
-// #[get("/")]
-// pub async fn read_all(state: Data<AppState>) -> impl Responder {
-//     todo!()
-// }
+#[get("/")]
+pub async fn read_all(state: Data<AppState>) -> impl Responder {
+    match sqlx::query_as::<_, DetalleVentas>("select * from detalle_ventas;")
+        .fetch_all(&state.db)
+        .await
+    {
+        Ok(ventas) => HttpResponse::Ok().json(ventas),
+        Err(_) => HttpResponse::NotFound().json("detalle ventas not found")
+    }
+}
 
-// #[get("/{id}")]
-// pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>, detalle_venta: Json<UpdateUsuario>) -> impl Responder {
-    // let id = path.into_inner();
-//     todo!()
-// }
+#[get("/{id}")]
+pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Responder {
+    let id = path.into_inner();
+    match sqlx::query_as::<_, DetalleVentas>("select * from detalle_ventas where codigo = ?;")
+        .bind(id)
+        .fetch_one(&state.db)
+        .await
+    {
+        Ok(venta) => HttpResponse::Ok().json(venta),
+        Err(_) => HttpResponse::NotFound().json("detalle venta not found")
+    }
+}
 
-// #[patch("/{id}")]
-// pub async fn update(state: Data<AppState>,  path: Path<i64>, venta: Json<UpdateDetalleVenta>) -> impl Responder {
-    // let id = path.into_inner();
-//     todo!()
-// }
+#[patch("/{id}")]
+pub async fn update(state: Data<AppState>,  path: Path<i64>, detalle_venta: Json<UpdateDetalleVenta>) -> impl Responder {
+    let id = path.into_inner();
+    match sqlx::query_as::<_, DetalleVentas>("update detalle_ventas set cantidad_producto = $1, valor_total = $2, valor_venta = $3, valor_iva = $4 where codigo = $5;")
+        .bind(detalle_venta.cantidad_producto)
+        .bind(detalle_venta.valor_total)
+        .bind(detalle_venta.valor_venta)
+        .bind(detalle_venta.valor_iva)
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await
+    {
+        Ok(_) => HttpResponse::Ok().json("detalle venta updated"),
+        Err(_) => HttpResponse::InternalServerError().json("could not update detalle venta")
+    }
+}
 
-// #[delete("/{id}")]
-// pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
-    // let id = path.into_inner();
-//     todo!()
-// }
+#[delete("/{id}")]
+pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
+    let id = path.into_inner();
+    match sqlx::query_as::<_, DetalleVentas>("delete from detalle_ventas where codigo = ?;")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await
+    {
+        Ok(_) => HttpResponse::Ok().json("detalle venta deleted"),
+        Err(_) => HttpResponse::InternalServerError().json("could not delete detalle venta")
+    }
+}
