@@ -34,15 +34,18 @@ struct UpdateVenta {
 
 // #[get("/{id}")]
 // pub async fn read_by_id(state: Data<AppState>,  path: Path<i64>) -> impl Responder {
+    // let id = path.into_inner();
 //     todo!()
 // }
 
 // #[patch("/{id}")]
 // pub async fn update(state: Data<AppState>,  path: Path<i64>, venta: Json<UpdateUsuario>) -> impl Responder {
+    // let id = path.into_inner();
 //     todo!()
 // }
 
 // #[delete("/{id}")]
 // pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
+    // let id = path.into_inner();
 //     todo!()
 // }

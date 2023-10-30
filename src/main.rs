@@ -1,4 +1,3 @@
-
 mod entities;
 
 use actix_web::{HttpServer, App, web::{self, Data}};
