@@ -27,6 +27,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(Data::new(AppState { db: pool.clone() }))
             .wrap(
                 Cors::default()
+                    .allowed_origin("http://127.0.0.1:8081")
                     .allowed_origin("http://localhost:8081")
                     .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE"])
                     .allowed_headers(vec![
@@ -35,7 +36,8 @@ async fn main() -> std::io::Result<()> {
                         header::CONTENT_TYPE,
                     ])
                     .supports_credentials()
-                    .max_age(3600),
+                    .max_age(3600)
+                    ,
             )
             .service(
                 web::scope("/api")
