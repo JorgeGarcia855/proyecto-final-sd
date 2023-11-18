@@ -9,17 +9,9 @@ use sqlx::FromRow;
 
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct DetalleVentas {
-    codigo: i64,
-    codigo_producto: i64,
-    codigo_venta: i64,
-    cantidad_producto: i32,
-    valor_total: f64,
-    valor_venta: f64,
-    valor_iva: f64,
-}
-
-#[derive(Debug, FromRow, Serialize, Deserialize)]
-struct UpdateDetalleVenta {
+    codigo: Option<i64>,
+    codigo_producto: Option<i64>,
+    codigo_venta: Option<i64>,
     cantidad_producto: i32,
     valor_total: f64,
     valor_venta: f64,
@@ -74,7 +66,7 @@ pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responde
 pub async fn update(
     state: Data<AppState>,
     path: Path<i64>,
-    detalle_venta: Json<UpdateDetalleVenta>,
+    detalle_venta: Json<DetalleVentas>,
 ) -> impl Responder {
     let id = path.into_inner();
     match sqlx::query_as::<_, DetalleVentas>("update detalle_ventas set cantidad_producto = $1, valor_total = $2, valor_venta = $3, valor_iva = $4 where codigo = $5;")
