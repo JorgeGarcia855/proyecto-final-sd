@@ -16,16 +16,18 @@ struct Usuarios {
     usuario: String,
 }
 
-
 #[post("/")]
 pub async fn create(state: Data<AppState>, usuario: Json<Usuarios>) -> impl Responder {
-    match sqlx::query_as::<_, Usuarios>("insert into usuarios values ($1,$2,$3,$4,$5);")
-        .bind(usuario.cedula)
-        .bind(usuario.email.as_str())
-        .bind(usuario.nombre.as_str())
-        .bind(usuario.password.as_str())
-        .bind(usuario.usuario.as_str())
-        .fetch_optional(&state.db)
+    match sqlx::query_as!(
+        Usuarios,
+        "insert into usuarios values ($1,$2,$3,$4,$5);",
+        usuario.cedula,
+        usuario.email.as_str(),
+        usuario.nombre.as_str(),
+        usuario.password.as_str(),
+        usuario.usuario.as_str()
+    )
+        .execute(&state.db)
         .await
     {
         Ok(_) => HttpResponse::Created().json("Usuario creado"),
@@ -35,7 +37,7 @@ pub async fn create(state: Data<AppState>, usuario: Json<Usuarios>) -> impl Resp
 
 #[get("/")]
 pub async fn read_all(state: Data<AppState>) -> impl Responder {
-    match sqlx::query_as::<_, Usuarios>("select * from usuarios;")
+    match sqlx::query_as!(Usuarios, "select * from usuarios;")
         .fetch_all(&state.db)
         .await
     {
@@ -47,8 +49,7 @@ pub async fn read_all(state: Data<AppState>) -> impl Responder {
 #[get("/{id}")]
 pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Usuarios>("select * from usuarios where cedula = ?;")
-        .bind(id)
+    match sqlx::query_as!(Usuarios,"select * from usuarios where cedula = $1;", id)
         .fetch_one(&state.db)
         .await
     {
@@ -64,13 +65,16 @@ pub async fn update(
     usuario: Json<Usuarios>,
 ) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Usuarios>("update usuarios set email = $1, nombre = $2, password = $3, usuario = $4 where cedula = $5;")
-        .bind(usuario.email.as_str())
-        .bind(usuario.nombre.as_str())
-        .bind(usuario.password.as_str())
-        .bind(usuario.usuario.as_str())
-        .bind(id)
-        .fetch_optional(&state.db)
+    match sqlx::query_as!(
+        Usuarios,
+        "update usuarios set email = $1, nombre = $2, password = $3, usuario = $4 where cedula = $5;",
+        usuario.email.as_str(),
+        usuario.nombre.as_str(),
+        usuario.password.as_str(),
+        usuario.usuario.as_str(),
+        id
+    )
+        .execute(&state.db)
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Usuario updated"),
@@ -81,9 +85,8 @@ pub async fn update(
 #[delete("/{id}")]
 pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Usuarios>("delete from usuarios where cedula = ?;")
-        .bind(id)
-        .fetch_optional(&state.db)
+    match sqlx::query_as!(Usuarios, "delete from usuarios where cedula = $1;", id)
+        .execute(&state.db)
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Usuario deleted"),

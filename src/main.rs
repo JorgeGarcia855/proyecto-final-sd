@@ -6,22 +6,25 @@ use actix_web::{
     web::{self, Data},
     App, HttpServer,
 };
-use sqlx::{sqlite::SqlitePoolOptions, Pool, Sqlite};
+use sqlx::{Pool, postgres::PgPoolOptions, Postgres};
 
 use crate::entities::*;
-
+/// Este struct indica la coneccion a la base de datos 
+/// por medio de una picina de conecciones que permite multiples operaciones concurrentes
 pub struct AppState {
-    db: Pool<Sqlite>,
+    db: Pool<Postgres>,
 }
 
+/// la funcion main contiene la picina de coneeciones de la base de datos y contiene el
+/// servidor http. El servidor permite conecciones al frontend con CORS.
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    let pool = SqlitePoolOptions::new()
+    let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect("sqlite://tienda-generica.db")
+        .connect("postgres://george:1234@localhost/tienda_generica")
         .await
         .expect("could not connect to the database");
-
+    
     HttpServer::new(move || {
         App::new()
             .app_data(Data::new(AppState { db: pool.clone() }))
@@ -71,7 +74,7 @@ async fn main() -> std::io::Result<()> {
                             .service(productos::read_by_id)
                             .service(productos::create)
                             .service(productos::delete)
-                            .service(productos::update),
+                            .service(productos::update)
                     )
                     .service(
                         web::scope("/ventas")

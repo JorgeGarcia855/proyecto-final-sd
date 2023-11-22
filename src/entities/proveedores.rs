@@ -18,13 +18,15 @@ struct Proveedores {
 
 #[post("/")]
 pub async fn create(state: Data<AppState>, proveedor: Json<Proveedores>) -> impl Responder {
-    match sqlx::query_as::<_, Proveedores>("insert into proveedores values ($1,$2,$3,$4,$5);")
-        .bind(proveedor.nit)
-        .bind(proveedor.ciudad.as_str())
-        .bind(proveedor.direccion.as_str())
-        .bind(proveedor.nombre.as_str())
-        .bind(proveedor.telefono.as_str())
-        .fetch_optional(&state.db)
+    match sqlx::query_as!(Proveedores, 
+        "insert into proveedores values ($1,$2,$3,$4,$5);",
+        proveedor.nit,
+        proveedor.ciudad.as_str(),
+        proveedor.direccion.as_str(),
+        proveedor.nombre.as_str(),
+        proveedor.telefono.as_str()
+    )
+        .execute(&state.db)
         .await
     {
         Ok(_) => HttpResponse::Created().json("Proveedor creado"),
@@ -34,7 +36,7 @@ pub async fn create(state: Data<AppState>, proveedor: Json<Proveedores>) -> impl
 
 #[get("/")]
 pub async fn read_all(state: Data<AppState>) -> impl Responder {
-    match sqlx::query_as::<_, Proveedores>("select * from proveedores;")
+    match sqlx::query_as!(Proveedores, "select * from proveedores;")
         .fetch_all(&state.db)
         .await
     {
@@ -46,8 +48,7 @@ pub async fn read_all(state: Data<AppState>) -> impl Responder {
 #[get("/{id}")]
 pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Proveedores>("select * from proveedores where nit = ?;")
-        .bind(id)
+    match sqlx::query_as!(Proveedores, "select * from proveedores where nit = $1;", id)
         .fetch_one(&state.db)
         .await
     {
@@ -63,13 +64,15 @@ pub async fn update(
     proveedor: Json<Proveedores>,
 ) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Proveedores>("update proveedores set ciudad = $1, direccion = $2, nombre = $3, telefono = $4 where nit = $5;")
-        .bind(proveedor.ciudad.as_str())
-        .bind(proveedor.direccion.as_str())
-        .bind(proveedor.nombre.as_str())
-        .bind(proveedor.telefono.as_str())
-        .bind(id)
-        .fetch_optional(&state.db)
+    match sqlx::query_as!(Proveedores, 
+        "update proveedores set ciudad = $1, direccion = $2, nombre = $3, telefono = $4 where nit = $5;",
+        proveedor.ciudad.as_str(),
+        proveedor.direccion.as_str(),
+        proveedor.nombre.as_str(),
+        proveedor.telefono.as_str(),
+        id
+    )
+        .execute(&state.db)
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Proveedor updated"),
@@ -80,9 +83,8 @@ pub async fn update(
 #[delete("/{id}")]
 pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Proveedores>("delete from proveedores where nit = ?;")
-        .bind(id)
-        .fetch_optional(&state.db)
+    match sqlx::query_as!(Proveedores, "delete from proveedores where nit = $1;", id)
+        .execute(&state.db)
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Proveedor deleted"),
