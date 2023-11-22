@@ -2,7 +2,7 @@ use crate::AppState;
 use actix_web::{
     delete, get, patch, post,
     web::{Data, Json, Path, self},
-    HttpResponse, Responder, Error
+    HttpResponse, Responder
 };
 
 use futures_util::stream::StreamExt;
@@ -25,25 +25,20 @@ struct Productos {
 
 #[post("/")]
 pub async fn create(state: Data<AppState>, mut payload: web::Payload) -> impl Responder {
-     // Create a temporary file to store the uploaded CSV
     let mut temp_file = NamedTempFile::new().unwrap();
     let mut bytes = Vec::new();
 
-    // Read the payload stream into the temporary file
     while let Some(chunk) = payload.next().await {
         let data = chunk.unwrap();
         temp_file.write_all(&data).unwrap();
         bytes.extend_from_slice(&data);
     }
 
-    // Create a CSV reader with a flexible configuration
     let mut csv_reader = ReaderBuilder::new()
         .has_headers(true) // Assumes the first row contains headers
         .from_reader(bytes.as_slice());
 
     let transaction = state.db.begin().await.unwrap();
-
-    // Deserialize CSV records into Productos instances and insert into the SQLite table
     for (index, result) in csv_reader.records().enumerate() {
         match result {
             Ok(record) => {
@@ -70,29 +65,9 @@ pub async fn create(state: Data<AppState>, mut payload: web::Payload) -> impl Re
             }
         }
     }
-
     transaction.commit().await.unwrap();
     HttpResponse::Ok().body("CSV file processed and data inserted into SQLite table")
-
 }
-
-
-// pub async fn create(state: Data<AppState>, producto: Json<Productos>) -> impl Responder {
-//     match sqlx::query_as::<_, Productos>("insert into productos values ($1,$2,$3,$4,$5,$6);")
-//         .bind(producto.codigo)
-//         .bind(producto.nit_proveedor)
-//         .bind(producto.iva_compra)
-//         .bind(producto.nombre_producto.as_str())
-//         .bind(producto.precio_compra)
-//         .bind(producto.precio_venta)
-//         .fetch_optional(&state.db)
-//         .await
-//     {
-//         Ok(_) => HttpResponse::Created().json("Producto creado"),
-//         Err(_) => HttpResponse::InternalServerError().json("could not create producto"),
-//     } 
-// }
-
 
 #[get("/")]
 pub async fn read_all(state: Data<AppState>) -> impl Responder {
