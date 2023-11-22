@@ -35,7 +35,7 @@ pub async fn create(state: Data<AppState>, mut payload: web::Payload) -> impl Re
     }
 
     let mut csv_reader = ReaderBuilder::new()
-        .has_headers(true) // Assumes the first row contains headers
+        .has_headers(true) 
         .from_reader(bytes.as_slice());
 
     let transaction = state.db.begin().await.unwrap();
