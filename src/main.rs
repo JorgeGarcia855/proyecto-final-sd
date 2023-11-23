@@ -17,6 +17,7 @@ pub struct AppState {
 
 /// la funcion main contiene la picina de coneeciones de la base de datos y contiene el
 /// servidor http. El servidor permite conecciones al frontend con CORS.
+/// Si es necesario, se debe cambiar el nombre de usuario y contraseña de postgres con el predeterminado
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let pool = PgPoolOptions::new()

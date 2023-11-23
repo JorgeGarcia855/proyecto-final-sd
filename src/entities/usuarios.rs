@@ -1,3 +1,6 @@
+//!Este archivo representa el servicio REST de la tabla 'usuarios'.
+//!Contiene todas las operaciones CRUD relacionadas.
+
 use crate::AppState;
 use actix_web::{
     delete, get, patch, post,
@@ -7,6 +10,8 @@ use actix_web::{
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
+/// La tabla 'usuarios' representada como un struct.
+/// Cedula es opcional debido a la operacion de `update`
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct Usuarios {
     cedula: Option<i64>,
@@ -16,6 +21,10 @@ struct Usuarios {
     usuario: String,
 }
 
+/// Crea un nuevo usuario y lo envia a la base de datos
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
+/// * `usuario` - Un json en el body del request representando el usuario
 #[post("/")]
 pub async fn create(state: Data<AppState>, usuario: Json<Usuarios>) -> impl Responder {
     match sqlx::query_as!(
@@ -35,6 +44,9 @@ pub async fn create(state: Data<AppState>, usuario: Json<Usuarios>) -> impl Resp
     }
 }
 
+/// Obtiene todos los usuarios de la base de datos
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
 #[get("/")]
 pub async fn read_all(state: Data<AppState>) -> impl Responder {
     match sqlx::query_as!(Usuarios, "select * from usuarios;")
@@ -46,6 +58,10 @@ pub async fn read_all(state: Data<AppState>) -> impl Responder {
     }
 }
 
+/// Obtiene un usuario de la base de datos, por medio de la id en la uri
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
+/// * `path` - la uri relativa a la api, esto es la id
 #[get("/{id}")]
 pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
@@ -58,12 +74,13 @@ pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responde
     }
 }
 
+/// Actualiza un usuario de la base de datos, por medio de la id en la uri
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
+/// * `path` - la uri relativa a la api, esto es la id
+/// * `usuario` - Un json en el body del request representando el usuario a actualizar
 #[patch("/{id}")]
-pub async fn update(
-    state: Data<AppState>,
-    path: Path<i64>,
-    usuario: Json<Usuarios>,
-) -> impl Responder {
+pub async fn update(state: Data<AppState>, path: Path<i64>, usuario: Json<Usuarios>) -> impl Responder {
     let id = path.into_inner();
     match sqlx::query_as!(
         Usuarios,
@@ -82,6 +99,10 @@ pub async fn update(
     }
 }
 
+/// Borra un usuario de la base de datos, por medio de la id en la uri
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
+/// * `path` - la uri relativa a la api, esto es la id
 #[delete("/{id}")]
 pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();

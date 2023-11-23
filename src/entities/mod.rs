@@ -1,6 +1,5 @@
 //! Este paquete (o mejor dicho crate) contiene todas las entidades que 
-//! se conectan a la base de datos de Sqlite.
-
+//! se conectan a la base de datos de Postgres.
 
 pub mod clientes;
 pub mod detalle_ventas;

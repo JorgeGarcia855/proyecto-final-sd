@@ -1,3 +1,6 @@
+//!Este archivo representa el servicio REST de la tabla 'detalle_ventas'.
+//!Contiene todas las operaciones CRUD relacionadas.
+
 use crate::AppState;
 use actix_web::{
     delete, get, patch, post,
@@ -7,6 +10,8 @@ use actix_web::{
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
+/// La tabla 'detalle_ventas' representada como un struct.
+/// La llave primaria y las foraneas son opcionales debido a la operacion de `update`
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct DetalleVentas {
     codigo: Option<i64>,
@@ -18,6 +23,10 @@ struct DetalleVentas {
     valor_iva: f64,
 }
 
+/// Crea un nuevo detalle de la venta y lo envia a la base de datos
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
+/// * `venta` - Un json en el body del request representando el detalle de la venta
 #[post("/")]
 pub async fn create(state: Data<AppState>, detalle_venta: Json<DetalleVentas>) -> impl Responder {
     match sqlx::query_as::<_, DetalleVentas>(
@@ -38,6 +47,9 @@ pub async fn create(state: Data<AppState>, detalle_venta: Json<DetalleVentas>) -
     }
 }
 
+/// Obtiene todos los detalles de la venta de la base de datos
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
 #[get("/")]
 pub async fn read_all(state: Data<AppState>) -> impl Responder {
     match sqlx::query_as::<_, DetalleVentas>("select * from detalle_ventas;")
@@ -49,6 +61,10 @@ pub async fn read_all(state: Data<AppState>) -> impl Responder {
     }
 }
 
+/// Obtiene un detalle de la venta de la base de datos, por medio de la id en la uri
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
+/// * `path` - la uri relativa a la api, esto es la id
 #[get("/{id}")]
 pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
@@ -62,12 +78,13 @@ pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responde
     }
 }
 
+/// Actualiza un detalle de la venta de la base de datos, por medio de la id en la uri
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
+/// * `path` - la uri relativa a la api, esto es la id
+/// * `detalle_venta` - Un json en el body del request representando el detalle de la venta a actualizar
 #[patch("/{id}")]
-pub async fn update(
-    state: Data<AppState>,
-    path: Path<i64>,
-    detalle_venta: Json<DetalleVentas>,
-) -> impl Responder {
+pub async fn update(state: Data<AppState>, path: Path<i64>, detalle_venta: Json<DetalleVentas>) -> impl Responder {
     let id = path.into_inner();
     match sqlx::query_as::<_, DetalleVentas>("update detalle_ventas set cantidad_producto = $1, valor_total = $2, valor_venta = $3, valor_iva = $4 where codigo = $5;")
         .bind(detalle_venta.cantidad_producto)
@@ -83,6 +100,10 @@ pub async fn update(
     }
 }
 
+/// Borra un detalle de la venta de la base de datos, por medio de la id en la uri
+/// ### Parametros
+/// * `state` - La coneccion a la base de datos
+/// * `path` - la uri relativa a la api, esto es la id
 #[delete("/{id}")]
 pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
