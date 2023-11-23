@@ -16,7 +16,7 @@ use sqlx::FromRow;
 struct Ventas {
     codigo: Option<i64>,
     cedula_cliente: Option<i64>,
-    cedula_venta: Option<i64>,
+    cedula_usuario: Option<i64>,
     iva_venta: f64,
     total_venta: f64,
     valor_venta: f64,
@@ -31,7 +31,7 @@ pub async fn create(state: Data<AppState>, venta: Json<Ventas>) -> impl Responde
     match sqlx::query_as::<_, Ventas>("insert into ventas values ($1,$2,$3,$4,$5,$6);")
         .bind(venta.codigo)
         .bind(venta.cedula_cliente)
-        .bind(venta.cedula_venta)
+        .bind(venta.cedula_usuario)
         .bind(venta.iva_venta)
         .bind(venta.total_venta)
         .bind(venta.valor_venta)
@@ -39,7 +39,9 @@ pub async fn create(state: Data<AppState>, venta: Json<Ventas>) -> impl Responde
         .await
     {
         Ok(_) => HttpResponse::Created().json("venta creada"),
-        Err(_) => HttpResponse::InternalServerError().json("could not create venta"),
+        Err(e) => {
+            eprintln!("{}",e);
+            HttpResponse::InternalServerError().json("could not create venta")},
     }
 }
 

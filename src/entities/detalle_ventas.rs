@@ -43,7 +43,9 @@ pub async fn create(state: Data<AppState>, detalle_venta: Json<DetalleVentas>) -
     .await
     {
         Ok(_) => HttpResponse::Created().json("detalle venta creada"),
-        Err(_) => HttpResponse::InternalServerError().json("could not create detalle venta"),
+        Err(e) => {
+            eprintln!("{}",e);
+            HttpResponse::InternalServerError().json("could not create detalle venta")},
     }
 }
 

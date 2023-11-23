@@ -4,12 +4,12 @@
 use crate::AppState;
 use actix_web::{
     delete, get, patch, post,
-    web::{Data, Json, Path, self},
+    web::{Data, Json, Path},
     HttpResponse, Responder
 };
-
+use actix_multipart::Multipart;
 use futures_util::stream::StreamExt;
-use std::io::Write;
+use std::io::{Write, Seek};
 use tempfile::NamedTempFile;
 use csv::ReaderBuilder;
 
@@ -36,19 +36,26 @@ struct Productos {
 /// * `state` - La coneccion a la base de datos
 /// * `producto` - Un json en el body del request representando el producto
 #[post("/")]
-pub async fn create(state: Data<AppState>, mut payload: web::Payload) -> impl Responder {
+pub async fn create(state: Data<AppState>, mut payload: Multipart) -> impl Responder {
+    // Create a temporary file to store the uploaded CSV
     let mut temp_file = NamedTempFile::new().unwrap();
-    let mut bytes = Vec::new();
 
-    while let Some(chunk) = payload.next().await {
-        let data = chunk.unwrap();
-        temp_file.write_all(&data).unwrap();
-        bytes.extend_from_slice(&data);
+    // Read the payload stream into the temporary file
+    while let Some(item) = payload.next().await {
+        let mut field = item.unwrap();
+        while let Some(chunk) = field.next().await {
+            let data = chunk.unwrap();
+            temp_file.write_all(&data).unwrap();
+        }
     }
 
+    // Reset the file cursor to the beginning
+    temp_file.as_file_mut().seek(std::io::SeekFrom::Start(0)).unwrap();
+
+    // Create a CSV reader with a flexible configuration
     let mut csv_reader = ReaderBuilder::new()
-        .has_headers(true) 
-        .from_reader(bytes.as_slice());
+        .has_headers(true) // Assumes the first row contains headers
+        .from_reader(temp_file);
 
     let transaction = state.db.begin().await.unwrap();
     for (index, result) in csv_reader.records().enumerate() {
