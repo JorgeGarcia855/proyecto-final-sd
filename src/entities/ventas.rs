@@ -66,7 +66,7 @@ pub async fn read_all(state: Data<AppState>) -> impl Responder {
 #[get("/{id}")]
 pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Ventas>("select * from ventas where codigo = ?;")
+    match sqlx::query_as::<_, Ventas>("select * from ventas where codigo = $1;")
         .bind(id)
         .fetch_one(&state.db)
         .await
@@ -106,7 +106,7 @@ pub async fn update(state: Data<AppState>, path: Path<i64>, venta: Json<Ventas>)
 #[delete("/{id}")]
 pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
     let id = path.into_inner();
-    match sqlx::query_as::<_, Ventas>("delete from ventas where codigo = ?;")
+    match sqlx::query_as::<_, Ventas>("delete from ventas where codigo = $1;")
         .bind(id)
         .fetch_optional(&state.db)
         .await

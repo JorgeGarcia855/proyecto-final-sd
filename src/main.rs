@@ -6,10 +6,10 @@ use actix_web::{
     web::{self, Data},
     App, HttpServer,
 };
-use sqlx::{Pool, postgres::PgPoolOptions, Postgres};
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 
 use crate::entities::*;
-/// Este struct indica la coneccion a la base de datos 
+/// Este struct indica la coneccion a la base de datos
 /// por medio de una picina de conecciones que permite multiples operaciones concurrentes
 pub struct AppState {
     db: Pool<Postgres>,
@@ -25,23 +25,24 @@ async fn main() -> std::io::Result<()> {
         .connect("postgres://george:1234@localhost/tienda_generica")
         .await
         .expect("could not connect to the database");
-    
+
     HttpServer::new(move || {
         App::new()
             .app_data(Data::new(AppState { db: pool.clone() }))
             .wrap(
                 Cors::default()
                     .allowed_origin("http://127.0.0.1:8081")
+                    .allowed_origin("http://127.0.0.1:5500")
                     .allowed_origin("http://localhost:8081")
                     .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE"])
                     .allowed_headers(vec![
                         header::AUTHORIZATION,
                         header::ACCEPT,
+                        header::ALLOW,
                         header::CONTENT_TYPE,
                     ])
                     .supports_credentials()
-                    .max_age(3600)
-                    ,
+                    .max_age(3600),
             )
             .service(
                 web::scope("/api")
@@ -76,6 +77,7 @@ async fn main() -> std::io::Result<()> {
                             .service(productos::create)
                             .service(productos::delete)
                             .service(productos::update)
+                            .service(productos::create_json),
                     )
                     .service(
                         web::scope("/ventas")
