@@ -7,7 +7,7 @@ edition = "2021"
 strip = true
 opt-level = "z"
 lto = true
-panic = "abort"
+panic = "unwind"
 codegen-units = 1
 
 [dependencies]

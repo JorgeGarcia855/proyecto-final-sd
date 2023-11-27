@@ -37,13 +37,16 @@ struct Productos {
 /// * `producto` - Un json en el body del request representando el producto
 #[post("/")]
 pub async fn create(state: Data<AppState>, mut payload: Multipart) -> impl Responder {
-    let mut temp_file = NamedTempFile::new().unwrap();
+    let mut temp_file = NamedTempFile::new().expect("some temp file");
     while let Some(item) = payload.next().await {
-        let mut field = item.unwrap();
-        while let Some(chunk) = field.next().await {
-            let data = chunk.unwrap();
-            temp_file.write_all(&data).unwrap();
-        }
+        if let Ok(mut field) = item {
+            while let Some(chunk) = field.next().await {
+                let data = chunk.expect("some bytes");
+                temp_file.write_all(&data).expect("could not write to temp file");
+            }
+        } else {
+            return HttpResponse::InternalServerError().body("incomplete form");
+        }  
     }
    
     temp_file.as_file_mut().seek(std::io::SeekFrom::Start(0)).unwrap();
@@ -51,7 +54,7 @@ pub async fn create(state: Data<AppState>, mut payload: Multipart) -> impl Respo
         .has_headers(true) 
         .from_reader(temp_file);
 
-    let transaction = state.db.begin().await.unwrap();
+    let transaction = state.db.begin().await.expect("failed connection");
     for result in csv_reader.records() {
         match result {
             Ok(record) => {
@@ -68,15 +71,15 @@ pub async fn create(state: Data<AppState>, mut payload: Multipart) -> impl Respo
                     .fetch_optional(&state.db)
                     .await
                     {
-                        transaction.rollback().await.unwrap();
+                        transaction.rollback().await.expect("failed connection");
                         return HttpResponse::InternalServerError().body(format!("Este csv contiene proveedores que no existen, o datos incorrectos. Reason: {e}"));
                     }
                 }
             }
-            Err(_) => return HttpResponse::InternalServerError().json("Error processing CSV record")
+            Err(e) => return HttpResponse::InternalServerError().body(e.to_string())
         }
     }
-    transaction.commit().await.unwrap();
+    transaction.commit().await.expect("failed connection");
     HttpResponse::Ok().body("CSV file processed and data inserted into the table")
 }
 
