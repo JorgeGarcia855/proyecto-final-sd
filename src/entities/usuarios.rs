@@ -15,8 +15,8 @@ use sqlx::FromRow;
 #[derive(Debug, FromRow, Serialize, Deserialize)]
 struct Usuarios {
     cedula: Option<i64>,
-    email: String,
-    nombre: String,
+    email: Option<String>,
+    nombre: Option<String>,
     password: String,
     usuario: String,
 }
@@ -31,8 +31,8 @@ pub async fn create(state: Data<AppState>, usuario: Json<Usuarios>) -> impl Resp
         Usuarios,
         "insert into usuarios values ($1,$2,$3,$4,$5);",
         usuario.cedula,
-        usuario.email.as_str(),
-        usuario.nombre.as_str(),
+        usuario.email,
+        usuario.nombre,
         usuario.password.as_str(),
         usuario.usuario.as_str()
     )
@@ -74,6 +74,25 @@ pub async fn read_by_id(state: Data<AppState>, path: Path<i64>) -> impl Responde
     }
 }
 
+
+/// Autenticacion basica de un usuario
+/// * `state` - La coneccion a la base de datos
+/// * `form` - Un json en el body del request representando el usuario que se ingreso en el formulario de login
+#[post("/login")]
+pub async fn auth(state: Data<AppState>, form: Json<Usuarios>) -> impl Responder {
+    match sqlx::query_as!(Usuarios, "select * from usuarios where usuario = $1;", form.usuario).fetch_optional(&state.db).await {
+        Ok(Some(user)) => {
+            if user.password == form.password {
+                HttpResponse::Ok().body("success")
+            } else {
+                HttpResponse::Unauthorized().body("bad password")
+            }
+        },
+        Ok(None) => HttpResponse::NotFound().body("User not found"),
+        Err(_) => HttpResponse::InternalServerError().body("Internal Server Error"),
+    }
+}
+
 /// Actualiza un usuario de la base de datos, por medio de la id en la uri
 /// ### Parametros
 /// * `state` - La coneccion a la base de datos
@@ -85,8 +104,8 @@ pub async fn update(state: Data<AppState>, path: Path<i64>, usuario: Json<Usuari
     match sqlx::query_as!(
         Usuarios,
         "update usuarios set email = $1, nombre = $2, password = $3, usuario = $4 where cedula = $5;",
-        usuario.email.as_str(),
-        usuario.nombre.as_str(),
+        usuario.email,
+        usuario.nombre,
         usuario.password.as_str(),
         usuario.usuario.as_str(),
         id

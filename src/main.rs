@@ -56,6 +56,7 @@ async fn main() -> std::io::Result<()> {
                     )
                     .service(
                         web::scope("/usuarios")
+                            .service(usuarios::auth)
                             .service(usuarios::read_all)
                             .service(usuarios::read_by_id)
                             .service(usuarios::create)

@@ -111,6 +111,6 @@ pub async fn delete(state: Data<AppState>, path: Path<i64>) -> impl Responder {
         .await
     {
         Ok(_) => HttpResponse::Ok().json("Client deleted"),
-        Err(_) => HttpResponse::InternalServerError().json("could not delete client"),
+        Err(e) => HttpResponse::InternalServerError().body(format!("Could not delete, reason: {e}"))
     }
 }

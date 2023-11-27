@@ -37,10 +37,7 @@ struct Productos {
 /// * `producto` - Un json en el body del request representando el producto
 #[post("/")]
 pub async fn create(state: Data<AppState>, mut payload: Multipart) -> impl Responder {
-    // Create a temporary file to store the uploaded CSV
     let mut temp_file = NamedTempFile::new().unwrap();
-
-    // Read the payload stream into the temporary file
     while let Some(item) = payload.next().await {
         let mut field = item.unwrap();
         while let Some(chunk) = field.next().await {
@@ -48,24 +45,18 @@ pub async fn create(state: Data<AppState>, mut payload: Multipart) -> impl Respo
             temp_file.write_all(&data).unwrap();
         }
     }
-
-    // Reset the file cursor to the beginning
-    temp_file
-        .as_file_mut()
-        .seek(std::io::SeekFrom::Start(0))
-        .unwrap();
-
-    // Create a CSV reader with a flexible configuration
+   
+    temp_file.as_file_mut().seek(std::io::SeekFrom::Start(0)).unwrap();
     let mut csv_reader = ReaderBuilder::new()
-        .has_headers(true) // Assumes the first row contains headers
+        .has_headers(true) 
         .from_reader(temp_file);
 
     let transaction = state.db.begin().await.unwrap();
-    for (index, result) in csv_reader.records().enumerate() {
+    for result in csv_reader.records() {
         match result {
             Ok(record) => {
                 if let Ok(producto) = record.deserialize::<Productos>(None) {
-                    if let Err(err) = sqlx::query_as::<_, Productos>(
+                    if let Err(e) = sqlx::query_as::<_, Productos>(
                         "INSERT INTO productos VALUES ($1, $2, $3, $4, $5, $6);",
                     )
                     .bind(producto.codigo)
@@ -78,16 +69,11 @@ pub async fn create(state: Data<AppState>, mut payload: Multipart) -> impl Respo
                     .await
                     {
                         transaction.rollback().await.unwrap();
-                        eprintln!("Error inserting product at index {}: {:?}", index, err);
-                        return HttpResponse::InternalServerError()
-                            .body("Este csv contiene proveedores que no existen");
+                        return HttpResponse::InternalServerError().body(format!("Este csv contiene proveedores que no existen, o datos incorrectos. Reason: {e}"));
                     }
                 }
             }
-            Err(err) => {
-                eprintln!("Error processing CSV record at index {}: {:?}", index, err);
-                return HttpResponse::InternalServerError().json("Error processing CSV record");
-            }
+            Err(_) => return HttpResponse::InternalServerError().json("Error processing CSV record")
         }
     }
     transaction.commit().await.unwrap();
@@ -98,7 +84,7 @@ pub async fn create(state: Data<AppState>, mut payload: Multipart) -> impl Respo
 /// ### Parametros
 /// * `state` - La coneccion a la base de datos
 /// * `producto` - Un json en el body del request representando el producto
-#[post("/")]
+#[post("/json")]
 pub async fn create_json(state: Data<AppState>, producto: Json<Productos>) -> impl Responder {
     match sqlx::query_as::<_, Productos>("insert into productos values ($1,$2,$3,$4,$5,$6);")
         .bind(producto.codigo)

@@ -3,15 +3,19 @@ name = "proyecto-final-sd"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+panic = "abort"
+codegen-units = 1
 
 [dependencies]
 actix-web = "4.4.0" 
 actix-cors = "0.6.4"
-serde = { version = "1.0.152", features = ["derive"] }
-sqlx ={ version = "0.7.2" ,features = ["postgres", "runtime-tokio-rustls"] }
+serde = { version = "1.0.152", default-features = false, features = ["derive", "alloc"] }
+sqlx ={ version = "0.7.2" , features = ["postgres", "runtime-tokio"] }
 futures-util = "0.3.29"
 csv = "1.3.0"
 tempfile = "3.2"
-sqlx-sqlite = "0.7.2"
 actix-multipart = "0.6.1"
